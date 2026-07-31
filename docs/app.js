@@ -83,9 +83,9 @@ animateProjectText();
 
 const chartConfigs = {
   everest: [
-    { title: '温度与湿度', unit: '°C · %RH', axes: { left: { min: -5, max: 15, ticks: [-5, 0, 5, 10, 15] }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
-    { title: '风速与风向', unit: 'm/s · °', axes: { left: { min: 0, max: 10, ticks: [0, 2.5, 5, 7.5, 10] }, right: { min: 0, max: 360, ticks: [0, 90, 180, 270, 360] } }, series: [{ name: '风速', unit: 'm/s', key: 'wind_speed_mean', sdKey: 'wind_speed_sd', color: '#7568d8', axis: 'left' }, { name: '风向', unit: '°', key: 'wind_direction_mean', color: '#d65d7b', axis: 'right' }] },
-    { title: 'O₃ 浓度', unit: 'ppb', axes: { left: { min: 0, max: 60, ticks: [0, 15, 30, 45, 60] } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }] }
+    { title: '温度与湿度', unit: '°C · %RH', axes: { left: { dynamic: true }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
+    { title: '风速与风向', unit: 'm/s · °', axes: { left: { dynamic: true, minFloor: 0 }, right: { min: 0, max: 360, ticks: [0, 90, 180, 270, 360] } }, series: [{ name: '风速', unit: 'm/s', key: 'wind_speed_mean', sdKey: 'wind_speed_sd', color: '#7568d8', axis: 'left' }, { name: '风向', unit: '°', key: 'wind_direction_mean', color: '#d65d7b', axis: 'right' }] },
+    { title: 'O₃ 浓度', unit: 'ppb', axes: { left: { dynamic: true } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }] }
   ]
 };
 
@@ -125,6 +125,29 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function buildDynamicAxis(seriesList, minFloor = null) {
+  const bounds = seriesList.flatMap((series) => series.values.flatMap((value, index) => {
+    if (!Number.isFinite(value)) return [];
+    const error = Number.isFinite(series.errors[index]) ? series.errors[index] : 0;
+    return [value - error, value + error];
+  }));
+  if (bounds.length === 0) return { min: 0, max: 4, ticks: [0, 1, 2, 3, 4] };
+
+  const rawMin = Math.min(...bounds);
+  const rawMax = Math.max(...bounds);
+  const padding = Math.max((rawMax - rawMin) * 0.12, 0.01);
+  const paddedMin = rawMin - padding;
+  const paddedMax = rawMax + padding;
+  let step = Math.max(1, Math.ceil((paddedMax - paddedMin) / 4));
+  let min = Number.isFinite(minFloor) ? minFloor : Math.floor(paddedMin / step) * step;
+  let max = min + step * 4;
+  while (max < paddedMax) {
+    step += 1;
+    max = min + step * 4;
+  }
+  return { min, max, ticks: Array.from({ length: 5 }, (_, index) => min + step * index) };
+}
+
 function renderChart(container, config, station, chartIndex) {
   const sourceCount = hourlyData.length;
   const labels = hourlyData.map((row, index) => {
@@ -148,25 +171,29 @@ function renderChart(container, config, station, chartIndex) {
     }
     return { ...series, values, errors };
   });
+  const axes = Object.fromEntries(Object.entries(config.axes).map(([axisName, axis]) => {
+    if (!axis.dynamic) return [axisName, axis];
+    return [axisName, buildDynamicAxis(prepared.filter((series) => series.axis === axisName), axis.minFloor)];
+  }));
   const width = 360;
   const height = 142;
-  const hasRightAxis = Boolean(config.axes.right);
+  const hasRightAxis = Boolean(axes.right);
   const plot = { left: 33, right: hasRightAxis ? 31 : 9, top: 9, bottom: 23 };
   const axisY = height - plot.bottom;
   const x = (index) => plot.left + (index / Math.max(1, displayLabels.length - 1)) * (width - plot.left - plot.right);
   const y = (value, axisName) => {
-    const axis = config.axes[axisName];
+    const axis = axes[axisName];
     const boundedValue = clamp(value, axis.min, axis.max);
     return plot.top + ((axis.max - boundedValue) / (axis.max - axis.min)) * (axisY - plot.top);
   };
-  const leftAxis = config.axes.left;
+  const leftAxis = axes.left;
   const leftSeries = prepared.find((series) => series.axis === 'left');
   const rightSeries = prepared.find((series) => series.axis === 'right');
   const horizontalGrid = leftAxis.ticks.map((tick) => {
     const gy = y(tick, 'left');
     return `<line class="grid-line" x1="${plot.left}" y1="${gy}" x2="${width - plot.right}" y2="${gy}"></line><text class="axis-label" style="fill:${leftSeries?.color || 'var(--axis)'}" x="${plot.left - 4}" y="${gy + 3}" text-anchor="end">${formatValue(tick)}</text>`;
   }).join('');
-  const rightAxisLabels = hasRightAxis ? config.axes.right.ticks.map((tick) => {
+  const rightAxisLabels = hasRightAxis ? axes.right.ticks.map((tick) => {
     const gy = y(tick, 'right');
     return `<text class="axis-label axis-label--right" style="fill:${rightSeries?.color || 'var(--axis)'}" x="${width - plot.right + 4}" y="${gy + 3}" text-anchor="start">${formatValue(tick)}</text>`;
   }).join('') : '';
