@@ -139,22 +139,17 @@
         <section class="right-column" aria-label="观测站实时数据">
           <div class="data-toolbar">
             <div><h2>站点最新数据</h2></div>
-            <div class="toolbar-actions">
-              <div class="segmented-control" id="window-controls" role="group" aria-label="选择数据时间范围">
-                <button type="button" class="is-active" data-window="24h" aria-pressed="true">24 小时</button>
-                <button type="button" data-window="7d" aria-pressed="false">7 天趋势</button>
-              </div>
-            </div>
           </div>
 
           <article class="station-panel station-panel--everest" id="everest-panel">
             <div class="station-heading">
               <div><h3>珠峰站</h3></div>
+              <time id="data-date" class="station-date" datetime="">----</time>
             </div>
             <div class="station-content">
               <div class="chart-grid" data-station="everest">
-                <figure class="camera-card"><img src="camera/1.gif" alt="摄像机一实时画面" /><figcaption class="chart-title">摄像机一</figcaption></figure>
-                <figure class="camera-card"><img src="camera/2.gif" alt="摄像机二实时画面" /><figcaption class="chart-title">摄像机二</figcaption></figure>
+                <figure class="camera-card"><img src="camera/1.webp" alt="摄像机一实时画面" /><figcaption class="chart-title">摄像机一</figcaption></figure>
+                <figure class="camera-card"><img src="camera/2.webp" alt="摄像机二实时画面" /><figcaption class="chart-title">摄像机二</figcaption></figure>
               </div>
             </div>
           </article>

@@ -186,6 +186,7 @@ h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line
 .station-heading > div { display: flex; align-items: center; gap: 10px; }
 .station-number { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #07131b; background: var(--gold); font: 500 10px 'DM Mono', monospace; }
 .station-heading h3 { margin: 0; font-size: 18px; }
+.station-date { color: var(--muted); font: 500 11px 'DM Mono', monospace; letter-spacing: .03em; }
 .station-heading p { margin: 1px 0 0; color: var(--muted); font: 10px 'DM Mono', monospace; }
 .focus-button { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; color: var(--muted); background: transparent; cursor: pointer; font-size: 11px; }
 .focus-button:hover, .focus-button:focus-visible { color: var(--gold-soft); border-color: var(--gold); outline: none; }
@@ -204,6 +205,7 @@ h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line
 .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; height: 100%; min-width: 0; min-height: 0; }
 .chart-card, .camera-card { min-width: 0; min-height: 0; padding: 9px 9px 6px; border: 1px solid var(--line); border-radius: 9px; background: var(--chart-bg); }
 .chart-card { display: flex; flex-direction: column; }
+.chart-placeholder { min-width: 0; min-height: 0; }
 .camera-card { position: relative; overflow: hidden; margin: 0; padding: 0; background: var(--camera-bg); }
 .camera-card img { display: block; width: 100%; height: 100%; object-fit: contain; background: var(--camera-bg); }
 .camera-card figcaption { position: absolute; top: 9px; left: 9px; z-index: 1; padding: 0; color: #dce9e5; background: none; font-size: 11px; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
@@ -217,6 +219,7 @@ h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line
 .chart-svg .axis-tick--minor { stroke-opacity: .7; }
 .chart-svg .axis-label { fill: var(--axis); font: 8px 'DM Mono', monospace; }
 .chart-svg .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-svg .uncertainty-band { fill-opacity: .18; pointer-events: none; }
 .chart-svg .point { stroke: var(--bg); stroke-width: 1.2; cursor: crosshair; }
 .chart-svg .point:focus { outline: none; stroke: var(--gold-soft); stroke-width: 2; }
 .chart-legend { display: flex; gap: 8px; margin-top: 2px; overflow: auto; }
