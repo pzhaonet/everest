@@ -83,7 +83,7 @@ animateProjectText();
 
 const chartConfigs = {
   everest: [
-    { title: '温度与湿度', unit: '°C · %RH', axes: { left: { min: -10, max: 20, ticks: [-10, 0, 10, 20] }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
+    { title: '温度与湿度', unit: '°C · %RH', axes: { left: { min: -5, max: 15, ticks: [-5, 0, 5, 10, 15] }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
     { title: '风速与风向', unit: 'm/s · °', axes: { left: { min: 0, max: 10, ticks: [0, 2.5, 5, 7.5, 10] }, right: { min: 0, max: 360, ticks: [0, 90, 180, 270, 360] } }, series: [{ name: '风速', unit: 'm/s', key: 'wind_speed_mean', sdKey: 'wind_speed_sd', color: '#7568d8', axis: 'left' }, { name: '风向', unit: '°', key: 'wind_direction_mean', color: '#d65d7b', axis: 'right' }] },
     { title: 'O₃ 浓度', unit: 'ppb', axes: { left: { min: 0, max: 60, ticks: [0, 15, 30, 45, 60] } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }] }
   ]
