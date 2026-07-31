@@ -6,4 +6,4 @@
 *.bat
 everest.Rproj
 .gitignore
-data/
+/data/
