@@ -83,14 +83,13 @@ animateProjectText();
 
 const chartConfigs = {
   everest: [
-    { title: '温度与湿度', unit: '°C · %RH', axes: { left: { dynamic: true }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
-    { title: '风速与风向', unit: 'm/s · °', axes: { left: { dynamic: true, minFloor: 0 }, right: { min: 0, max: 360, ticks: [0, 90, 180, 270, 360] } }, series: [{ name: '风速', unit: 'm/s', key: 'wind_speed_mean', sdKey: 'wind_speed_sd', color: '#7568d8', axis: 'left' }, { name: '风向', unit: '°', key: 'wind_direction_mean', color: '#d65d7b', axis: 'right' }] },
-    { title: 'O₃ 浓度', unit: 'ppb', axes: { left: { dynamic: true } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }] }
+    { source: 'qxy', title: '温度与湿度', unit: '°C · %RH', axes: { left: { dynamic: true }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
+    { source: 'qxy', title: '风速与风向', unit: 'm/s · °', axes: { left: { dynamic: true, minFloor: 0 }, right: { min: 0, max: 360, ticks: [0, 90, 180, 270, 360] } }, series: [{ name: '风速', unit: 'm/s', key: 'wind_speed_mean', sdKey: 'wind_speed_sd', color: '#7568d8', axis: 'left' }, { name: '风向', unit: '°', key: 'wind_direction_mean', color: '#d65d7b', axis: 'right' }] },
+    { source: 'o3', title: 'O₃ 浓度', unit: 'ppb', axes: { left: { dynamic: true } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }] }
   ]
 };
 
-let hourlyData = [];
-const dataDateElement = document.querySelector('#data-date');
+let hourlyData = { o3: [], qxy: [] };
 const chartTooltip = document.createElement('div');
 chartTooltip.className = 'chart-tooltip';
 chartTooltip.setAttribute('role', 'status');
@@ -110,9 +109,17 @@ function parseCsv(text) {
 }
 
 async function loadHourlyData() {
-  const response = await fetch(`data/hourly.csv?v=${Date.now()}`, { cache: 'no-store' });
-  if (!response.ok) throw new Error(`hourly.csv 加载失败：${response.status}`);
-  return parseCsv(await response.text());
+  const version = Date.now();
+  const loadFile = async (fileName) => {
+    const response = await fetch(`data/${fileName}?v=${version}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`${fileName} 加载失败：${response.status}`);
+    return parseCsv(await response.text());
+  };
+  const [o3, qxy] = await Promise.all([
+    loadFile('hourly_O3.csv'),
+    loadFile('hourly_qxy.csv')
+  ]);
+  return { o3, qxy };
 }
 
 function formatValue(value) {
@@ -149,19 +156,20 @@ function buildDynamicAxis(seriesList, minFloor = null) {
 }
 
 function renderChart(container, config, station, chartIndex) {
-  const sourceCount = hourlyData.length;
-  const labels = hourlyData.map((row, index) => {
+  const sourceData = hourlyData[config.source] || [];
+  const sourceCount = sourceData.length;
+  const labels = sourceData.map((row, index) => {
     const match = String(row.time || '').match(/\s(\d{2}):/);
     return match ? String(Number(match[1])) : String(index);
   });
   const isFullDay = sourceCount === 24 && labels[0] === '0' && labels.at(-1) === '23';
   const displayLabels = isFullDay ? [...labels, '24'] : labels;
   const prepared = config.series.map((series) => {
-    const values = hourlyData.map((row) => {
+    const values = sourceData.map((row) => {
       const value = Number(row[series.key]);
       return Number.isFinite(value) ? value : null;
     });
-    const errors = hourlyData.map((row) => {
+    const errors = sourceData.map((row) => {
       const value = Number(row[series.sdKey]);
       return Number.isFinite(value) ? value : null;
     });
@@ -231,7 +239,8 @@ function renderChart(container, config, station, chartIndex) {
     return `<circle class="point" tabindex="0" role="img" aria-label="${series.name} ${displayLabels[index]} 时 ${formatValue(value)} ${series.unit}" data-series="${series.name}" data-label="${displayLabels[index]}" data-value="${formatValue(value)}" data-sd="${Number.isFinite(error) ? formatValue(error) : ''}" data-unit="${series.unit}" cx="${x(index).toFixed(1)}" cy="${y(value, series.axis).toFixed(1)}" r="2.5" fill="${series.color}"></circle>`;
   }).join('')).join('');
   const legends = prepared.map((series) => `<button type="button" class="legend-button" data-series-toggle="${station}-${chartIndex}-${series.name}" data-series-name="${series.name}" aria-pressed="true"><i class="legend-swatch" style="--series-color:${series.color}"></i>${series.name} (${series.unit})</button>`).join('');
-  container.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-head"><div class="chart-legend">${legends}</div></div><svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${station} ${config.title}小时监测趋势图"><title>${station} ${config.title}</title><desc>实线为小时平均值，半透明阴影为正负一个标准差。</desc>${horizontalGrid}${rightAxisLabels}${timeAxis}${bands}${paths}${circles}</svg></div>`);
+  const dataDate = String(sourceData[0]?.time || '').slice(0, 10);
+  container.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-head"><div class="chart-legend">${legends}</div><time class="chart-date" datetime="${dataDate}">${dataDate || '----'}</time></div><svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${station} ${config.title}小时监测趋势图"><title>${station} ${config.title}</title><desc>实线为小时平均值，半透明阴影为正负一个标准差。</desc>${horizontalGrid}${rightAxisLabels}${timeAxis}${bands}${paths}${circles}</svg></div>`);
   const card = container.lastElementChild;
   card.querySelectorAll('.point').forEach((point) => {
     const showTooltip = () => {
@@ -276,18 +285,13 @@ function renderAllCharts() {
 async function initializeCharts() {
   try {
     hourlyData = await loadHourlyData();
-    if (hourlyData.length === 0) throw new Error('hourly.csv 没有数据');
-    const dataDate = String(hourlyData[0]?.time || '').slice(0, 10);
-    if (dataDate && dataDateElement) {
-      dataDateElement.textContent = dataDate;
-      dataDateElement.dateTime = dataDate;
-    }
+    if (hourlyData.o3.length === 0 || hourlyData.qxy.length === 0) throw new Error('hourly_O3.csv 或 hourly_qxy.csv 没有数据');
     renderAllCharts();
   } catch (error) {
     console.error(error);
     document.querySelectorAll('.chart-grid').forEach((grid) => {
       const cameraCards = Array.from(grid.querySelectorAll('.camera-card')).map((card) => card.outerHTML).join('');
-      grid.innerHTML = `<div class="chart-fallback">暂时无法读取 hourly.csv</div>${cameraCards}`;
+      grid.innerHTML = `<div class="chart-fallback">暂时无法读取 hourly_O3.csv 或 hourly_qxy.csv</div>${cameraCards}`;
     });
   }
 }
