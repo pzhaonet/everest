@@ -43,12 +43,8 @@
                 <h2>院士工作站简介</h2>
               </div>
             </div>
-            <p class="intro-copy">面向青藏高原生态环境与人体健康研究，工作站依托珠峰、拉萨等典型海拔梯度观测站，持续采集大气环境、气象因子与生态过程数据，为高原环境变化评估和科考协同提供基础支撑。</p>
-            <div class="intro-metrics" aria-label="工作站概览指标">
-              <div><strong>3</strong><span>协同观测站</span></div>
-              <div><strong>24<span>h</span></strong><span>连续监测</span></div>
-              <div><strong>16</strong><span>核心仪器</span></div>
-            </div>
+            <p class="intro-copy" id="intro-copy"></p>
+            <div class="intro-metrics" id="intro-metrics" aria-label="工作站概览指标"></div>
           </article>
 
           <article class="panel overview-panel">
@@ -59,14 +55,8 @@
             </div>
             <div class="table-responsive">
               <table class="data-table" aria-label="观测站与仪器设备概览表">
-                <thead>
-                  <tr><th>中文全称</th><th>中文简称</th><th>英文全称</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td>拉萨城市空气质量与环境健康综合观测站</td><td>拉萨站</td><td>Lhasa Comprehensive Observation Station for Urban Air Quality and Environmental Health</td></tr>
-                  <tr><td>那曲高寒草地生态站</td><td>那曲站</td><td>Nagqu Ecology Station for Alpine Meadow</td></tr>
-                  <tr><td>珠峰环境变化综合观测站</td><td>珠峰站</td><td>Qomolangma Comprehensive Observation Station for Environmental Change</td></tr>
-                </tbody>
+                <thead id="station-head"></thead>
+                <tbody id="station-track"></tbody>
               </table>
             </div>
           </article>
@@ -79,19 +69,8 @@
             </div>
             <div class="instrument-viewport" id="instrument-viewport" aria-label="自动滚动的仪器总体情况表">
               <table class="data-table instrument-table">
-                <thead><tr><th>仪器名称</th><th>型号</th><th>所属站点</th><th>监测要素</th></tr></thead>
-                <tbody id="instrument-track">
-                  <tr><td>温湿度传感器</td><td>Model H-03</td><td>珠峰站</td><td>温度 / 湿度</td></tr>
-                  <tr><td>三维超声风速仪</td><td>WindSonic-01</td><td>珠峰站</td><td>风速 / 风向</td></tr>
-                  <tr><td>臭氧分析仪</td><td>O3-UV 200</td><td>珠峰站</td><td>O₃</td></tr>
-                  <tr><td>一氧化碳分析仪</td><td>CO-Trace 4</td><td>拉萨站</td><td>CO</td></tr>
-                  <tr><td>颗粒物监测仪</td><td>AeroSense 2.5</td><td>拉萨站</td><td>NOₓ / PM2.5</td></tr>
-                  <tr><td>生态通量观测系统</td><td>FluxTower-LZ</td><td>林芝站</td><td>CO₂ / 能量通量</td></tr>
-                  <tr><td>净辐射观测仪</td><td>NR-Lite2</td><td>珠峰站</td><td>短波 / 长波辐射</td></tr>
-                  <tr><td>二氧化碳分析仪</td><td>LI-850</td><td>拉萨站</td><td>CO₂</td></tr>
-                  <tr><td>气溶胶粒径谱仪</td><td>APS-3321</td><td>拉萨站</td><td>粒径 / 数浓度</td></tr>
-                  <tr><td>自动气象站</td><td>CR3000-MET</td><td>林芝站</td><td>气压 / 降水</td></tr>
-                </tbody>
+                <thead id="instrument-head"></thead>
+                <tbody id="instrument-track"></tbody>
               </table>
             </div>
           </article>
@@ -102,36 +81,28 @@
                 <h2>科考影像</h2>
               </div>
             </div>
-            <div class="photo-grid" aria-label="科研活动影像示意">
-              <figure class="field-photo"><img src="photo/image11.png" alt="珠峰观测场与雪山" /><figcaption>珠峰观测场</figcaption></figure>
-              <figure class="field-photo"><img src="photo/image12.jpeg" alt="观测站仪器设备室" /><figcaption>仪器设备室</figcaption></figure>
-              <figure class="field-photo"><img src="photo/image13.jpeg" alt="环境实验观测舱" /><figcaption>环境观测舱</figcaption></figure>
-              <figure class="field-photo"><img src="photo/image14.jpeg" alt="屋顶综合观测站" /><figcaption>综合观测站</figcaption></figure>
-              <figure class="field-photo"><img src="photo/image15.jpeg" alt="珠峰科考团队合影" /><figcaption>珠峰科考</figcaption></figure>
-              <figure class="field-photo"><img src="photo/image16.jpeg" alt="高原科考团队合影" /><figcaption>科考团队</figcaption></figure>
-              <figure class="field-photo"><img src="photo/image17.jpeg" alt="科考保障基地合影" /><figcaption>科考基地</figcaption></figure>
-            </div>
+            <div class="photo-grid" id="photo-grid" aria-label="科研活动影像示意"></div>
           </article>
 
           <article class="panel projects-panel">
             <div class="section-heading section-heading--compact">
               <div>
-                <h2>科研项目与成果</h2>
+                <h2>科研项目</h2>
               </div>
             </div>
-            <div class="project-text-viewport" id="project-text-viewport" tabindex="0" aria-label="自动滚动的科研项目与论文信息">
-              <div class="project-text-track" id="project-text-track">
-                <ol class="project-list">
-                  <li><span class="project-index">01</span><div class="project-detail"><span>西藏自治区重点研发及转化重点专项项目：西藏高原环境暴露与人群健康风险监测、管控与应急管理技术研究</span><small>项目编号：XZ25012Y0072-1　项目负责人：朱彤</small></div></li>
-                  <li><span class="project-index">02</span><div class="project-detail"><span>第二次青藏高原科学考察：第二冰塔林成分本底站设计与建设</span><small>项目编号：XZ00061303　项目负责人：朱彤</small></div></li>
-                  <li><span class="project-index">03</span><div class="project-detail"><span>西藏自治区重点研发项目：高原大气 VOCs 与 PM2.5 多尺度协同演变机制及综合防控关键技术研究</span><small>项目编号：XZ202601ZY0130　项目负责人：朱彤</small></div></li>
-                  <li><span class="project-index">04</span><div class="project-detail"><span>国家自然科学基金地区项目：具有分区功能化模块的双功能催化剂及其联催化产氢</span><small>项目编号：43080019　项目负责人：朱彤</small></div></li>
-                </ol>
-                <div class="publication">
-                  <span class="publication-label">近期论文</span>
-                  <p class="publication-reference">Xiong S, Pan W, Bu D, et al. First investigation into occurrence, trophodynamics, and risk implication of polychlorinated naphthalenes and polychlorinated biphenyls in a terrestrial food chain from Tibetan Plateau[J]. <em>Environmental Pollution</em>, 2026, 396: 127887.</p>
-                </div>
+            <div class="project-text-viewport" id="project-text-viewport" tabindex="0" aria-label="自动滚动的科研项目">
+              <div class="project-text-track" id="project-text-track"></div>
+            </div>
+          </article>
+
+          <article class="panel projects-panel publications-panel">
+            <div class="section-heading section-heading--compact">
+              <div>
+                <h2>近期论文</h2>
               </div>
+            </div>
+            <div class="publication-text-viewport" id="publication-text-viewport" tabindex="0" aria-label="自动滚动的近期论文">
+              <div class="project-text-track" id="publication-text-track"></div>
             </div>
           </article>
         </section>

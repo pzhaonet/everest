@@ -1,0 +1,44 @@
+﻿[
+    {
+        "order":  1,
+        "title":  "珠峰观测场",
+        "src":  "photo/01-珠峰观测场.png",
+        "alt":  "珠峰观测场"
+    },
+    {
+        "order":  2,
+        "title":  "仪器设备室",
+        "src":  "photo/02-仪器设备室.jpeg",
+        "alt":  "仪器设备室"
+    },
+    {
+        "order":  3,
+        "title":  "暴露仓",
+        "src":  "photo/03-暴露仓.jpeg",
+        "alt":  "暴露仓"
+    },
+    {
+        "order":  4,
+        "title":  "综合观测站",
+        "src":  "photo/04-综合观测站.jpeg",
+        "alt":  "综合观测站"
+    },
+    {
+        "order":  5,
+        "title":  "珠峰科考",
+        "src":  "photo/05-珠峰科考.jpeg",
+        "alt":  "珠峰科考"
+    },
+    {
+        "order":  6,
+        "title":  "科考团队",
+        "src":  "photo/06-科考团队.jpeg",
+        "alt":  "科考团队"
+    },
+    {
+        "order":  7,
+        "title":  "科考基地",
+        "src":  "photo/07-科考基地.jpeg",
+        "alt":  "科考基地"
+    }
+]

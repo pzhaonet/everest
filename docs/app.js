@@ -56,30 +56,30 @@ function animateInstrumentTable() {
 ['mouseleave', 'focusout'].forEach((eventName) => instrumentViewport.addEventListener(eventName, () => { tablePaused = false; }));
 animateInstrumentTable();
 
-const projectViewport = document.querySelector('#project-text-viewport');
-const projectTrack = document.querySelector('#project-text-track');
-let projectOffset = 0;
-let projectPaused = false;
-
-function animateProjectText() {
-  const limit = Math.max(0, projectTrack.scrollHeight - projectViewport.clientHeight);
-  if (!projectPaused && !prefersReducedMotion && limit > 4) {
-    projectOffset += 0.12;
-    if (projectOffset > limit + 28) projectOffset = 0;
-    projectTrack.style.transform = `translateY(${-projectOffset}px)`;
-  } else if (limit <= 4) {
-    projectTrack.style.transform = 'translateY(0)';
-  }
-  window.requestAnimationFrame(animateProjectText);
+function setupTextScroller(viewportId, trackId) {
+  const viewport = document.querySelector(`#${viewportId}`);
+  const track = document.querySelector(`#${trackId}`);
+  if (!viewport || !track) return;
+  let offset = 0;
+  let paused = false;
+  const animate = () => {
+    const limit = Math.max(0, track.scrollHeight - viewport.clientHeight);
+    if (!paused && !prefersReducedMotion && limit > 4) {
+      offset += 0.12;
+      if (offset > limit + 28) offset = 0;
+      track.style.transform = `translateY(${-offset}px)`;
+    } else if (limit <= 4) {
+      track.style.transform = 'translateY(0)';
+    }
+    window.requestAnimationFrame(animate);
+  };
+  ['mouseenter', 'focusin'].forEach((eventName) => viewport.addEventListener(eventName, () => { paused = true; }));
+  ['mouseleave', 'focusout'].forEach((eventName) => viewport.addEventListener(eventName, () => { paused = false; }));
+  animate();
 }
 
-['mouseenter', 'focusin'].forEach((eventName) => {
-  projectViewport.addEventListener(eventName, () => { projectPaused = true; });
-});
-['mouseleave', 'focusout'].forEach((eventName) => {
-  projectViewport.addEventListener(eventName, () => { projectPaused = false; });
-});
-animateProjectText();
+setupTextScroller('project-text-viewport', 'project-text-track');
+setupTextScroller('publication-text-viewport', 'publication-text-track');
 
 const chartConfigs = {
   everest: [
@@ -96,16 +96,128 @@ chartTooltip.setAttribute('role', 'status');
 document.body.appendChild(chartTooltip);
 
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  const unquote = (value) => value.replace(/^"|"$/g, '').replace(/""/g, '"');
-  const headers = lines.shift().split(',').map(unquote);
-  return lines.map((line) => {
-    const values = line.split(',').map(unquote);
-    return headers.reduce((row, header, index) => {
-      row[header] = values[index] ?? '';
-      return row;
-    }, {});
-  });
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let quoted = false;
+  const source = String(text).replace(/^\uFEFF/, '');
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    const next = source[index + 1];
+    if (character === '"') {
+      if (quoted && next === '"') {
+        cell += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (character === ',' && !quoted) {
+      row.push(cell);
+      cell = '';
+    } else if ((character === '\n' || character === '\r') && !quoted) {
+      if (character === '\r' && next === '\n') index += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+    } else {
+      cell += character;
+    }
+  }
+  if (cell !== '' || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
+  const headers = (rows.shift() || []).map((header) => header.trim());
+  return rows.filter((values) => values.some((value) => value.trim() !== '')).map((values) => headers.reduce((result, header, index) => {
+    result[header] = (values[index] ?? '').trim();
+    return result;
+  }, {}));
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[character]));
+}
+
+async function fetchContentFile(fileName, type = 'text') {
+  const response = await fetch(`content/${fileName}?v=${Date.now()}`, { cache: 'no-store' });
+  if (!response.ok) throw new Error(`${fileName} 加载失败：${response.status}`);
+  return type === 'json' ? response.json() : response.text();
+}
+
+async function loadContent() {
+  const [intro, metrics, stations, instruments, projects, publications, photos] = await Promise.all([
+    fetchContentFile('intro.txt'),
+    fetchContentFile('intro_metrics.csv').then(parseCsv),
+    fetchContentFile('stations.csv').then(parseCsv),
+    fetchContentFile('instruments.csv').then(parseCsv),
+    fetchContentFile('projects.csv').then(parseCsv),
+    fetchContentFile('publications.csv').then(parseCsv),
+    fetchContentFile('photos.json', 'json')
+  ]);
+  return { intro: intro.trim(), metrics, stations, instruments, projects, publications, photos };
+}
+
+function renderTableHead(elementId, labels) {
+  const target = document.querySelector(`#${elementId}`);
+  if (target) target.innerHTML = `<tr>${labels.map((label) => `<th>${escapeHtml(label)}</th>`).join('')}</tr>`;
+}
+
+function renderTableRows(elementId, rows, fields) {
+  const target = document.querySelector(`#${elementId}`);
+  if (!target) return;
+  target.innerHTML = rows.map((row) => `<tr>${fields.map((field) => `<td>${escapeHtml(row[field])}</td>`).join('')}</tr>`).join('');
+}
+
+function formatPublicationReference(publication) {
+  const authors = escapeHtml(publication.authors).replace(/;\s*/g, ', ');
+  const title = escapeHtml(publication.title);
+  const journal = escapeHtml(publication.journal);
+  const year = escapeHtml(publication.year);
+  const volume = escapeHtml(publication.volume);
+  const pages = escapeHtml(publication.pages);
+  const publicationDetails = [year, volume].filter(Boolean).join(', ');
+  const pageDetails = pages ? `${publicationDetails ? ': ' : ''}${pages}` : '';
+  const details = publicationDetails || pageDetails ? `, ${publicationDetails}${pageDetails}` : '';
+  return `${authors}. ${title}[J]. <em>${journal}</em>${details}.`;
+}
+
+function renderContent(content) {
+  const introCopy = document.querySelector('#intro-copy');
+  if (introCopy) introCopy.textContent = content.intro;
+
+  const metrics = document.querySelector('#intro-metrics');
+  if (metrics) {
+    metrics.innerHTML = content.metrics.map((metric) => `<div><strong>${escapeHtml(metric.value)}${metric.suffix ? `<span>${escapeHtml(metric.suffix)}</span>` : ''}</strong><span>${escapeHtml(metric.label)}</span></div>`).join('');
+  }
+
+  renderTableHead('station-head', ['中文全称', '中文简称', '英文全称']);
+  renderTableRows('station-track', content.stations, ['name', 'short_name', 'english_name']);
+  renderTableHead('instrument-head', ['仪器名称', '型号', '所属站点', '监测要素']);
+  renderTableRows('instrument-track', content.instruments, ['name', 'model', 'station', 'elements']);
+
+  const photoGrid = document.querySelector('#photo-grid');
+  if (photoGrid) {
+    photoGrid.innerHTML = content.photos.map((photo) => `<figure class="field-photo"><img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt || photo.title)}" /><figcaption>${escapeHtml(photo.title)}</figcaption></figure>`).join('');
+  }
+
+  const projectTrack = document.querySelector('#project-text-track');
+  if (projectTrack) {
+    const projects = content.projects.map((project) => `<li><span class="project-index">${escapeHtml(project.index)}</span><div class="project-detail"><span>${escapeHtml(project.title)}</span><small>项目编号：${escapeHtml(project.code || '—')}　项目负责人：${escapeHtml(project.leader)}　项目经费：${escapeHtml(project.funding)}　执行状态：${escapeHtml(project.status)}</small></div></li>`).join('');
+    projectTrack.innerHTML = `<ol class="project-list">${projects}</ol>`;
+  }
+
+  const publicationTrack = document.querySelector('#publication-text-track');
+  if (publicationTrack) {
+    const publications = content.publications
+      .map((publication, originalIndex) => ({ publication, originalIndex }))
+      .sort((left, right) => Number(right.publication.year || 0) - Number(left.publication.year || 0) || left.originalIndex - right.originalIndex)
+      .map(({ publication }) => `<div class="publication"><p class="publication-reference" title="${escapeHtml(publication.title)}">${formatPublicationReference(publication)}</p></div>`)
+      .join('');
+    publicationTrack.innerHTML = publications;
+  }
 }
 
 async function loadHourlyData() {
@@ -296,4 +408,13 @@ async function initializeCharts() {
   }
 }
 
+async function initializeContent() {
+  try {
+    renderContent(await loadContent());
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+initializeContent();
 initializeCharts();
