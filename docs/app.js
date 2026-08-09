@@ -101,6 +101,8 @@ chartConfigs.everest.filter((config) => ['combined_o3_co', 'ftir'].includes(conf
   config.series.forEach((series) => {
     if (series.name === 'CO') series.color = '#f05d5e';
     if (series.name === 'CH₄') series.color = '#00a6a6';
+    if (config.source === 'combined_o3_co') series.dateKey = series.name === 'O₃' ? 'O3_date' : 'CO_date';
+    if (config.source === 'ftir') series.dateKey = series.name === 'CO₂' ? 'CO2_date' : 'CH4_date';
   });
 });
 let hourlyData = { o3: [], qxy: [], ftir: [], combined_o3_co: [] };
@@ -251,9 +253,25 @@ async function loadHourlyData() {
     loadFile('hourly_qxy.csv'),
     loadFile('hourly_ftir.csv')
   ]);
-  const ftirByTime = new Map(ftir.map((row) => [row.time, row]));
-  const combined_o3_co = o3.map((row) => ({ ...row, ...(ftirByTime.get(row.time) || {}) }));
-  return { o3, qxy, ftir, combined_o3_co };
+  const ftirWithDates = ftir.map((row) => ({ ...row, CO2_date: String(row.time || '').slice(0, 10), CH4_date: String(row.time || '').slice(0, 10) }));
+  const byHour = (row) => String(row.time || '').match(/\s(\d{2}):/)?.[1] || '';
+  const o3ByHour = new Map(o3.map((row) => [byHour(row), row]));
+  const ftirByHour = new Map(ftirWithDates.map((row) => [byHour(row), row]));
+  const hours = [...new Set([...o3ByHour.keys(), ...ftirByHour.keys()])].sort();
+  const combined_o3_co = hours.map((hour) => {
+    const o3Row = o3ByHour.get(hour) || {};
+    const ftirRow = ftirByHour.get(hour) || {};
+    return {
+      time: o3Row.time || ftirRow.time,
+      O3_mean: o3Row.O3_mean,
+      O3_sd: o3Row.O3_sd,
+      CO_mean: ftirRow.CO_mean,
+      CO_sd: ftirRow.CO_sd,
+      O3_date: String(o3Row.time || '').slice(0, 10),
+      CO_date: String(ftirRow.time || '').slice(0, 10)
+    };
+  });
+  return { o3, qxy, ftir: ftirWithDates, combined_o3_co };
 }
 
 function formatValue(value) {
@@ -311,7 +329,8 @@ function renderChart(container, config, station, chartIndex) {
       values.push(values.at(-1));
       errors.push(errors.at(-1));
     }
-    return { ...series, values, errors };
+    const dates = [...new Set(sourceData.map((row) => row[series.dateKey] || '').filter(Boolean))];
+    return { ...series, values, errors, dates };
   });
   const axes = Object.fromEntries(Object.entries(config.axes).map(([axisName, axis]) => {
     if (!axis.dynamic) return [axisName, axis];
@@ -372,8 +391,13 @@ function renderChart(container, config, station, chartIndex) {
     const error = series.errors[index];
     return `<circle class="point" tabindex="0" role="img" aria-label="${series.name} ${displayLabels[index]} 时 ${formatValue(value)} ${series.unit}" data-series="${series.name}" data-label="${displayLabels[index]}" data-value="${formatValue(value)}" data-sd="${Number.isFinite(error) ? formatValue(error) : ''}" data-unit="${series.unit}" cx="${x(index).toFixed(1)}" cy="${y(value, series.axis).toFixed(1)}" r="2.5" fill="${series.color}"></circle>`;
   }).join('')).join('');
-  const legends = prepared.map((series) => `<button type="button" class="legend-button" data-series-toggle="${station}-${chartIndex}-${series.name}" data-series-name="${series.name}" aria-pressed="true"><i class="legend-swatch" style="--series-color:${series.color}"></i>${series.name} (${series.unit})</button>`).join('');
-  const dataDate = String(sourceData[0]?.time || '').slice(0, 10);
+  const seriesDates = [...new Set(prepared.flatMap((series) => series.dates))];
+  const datesDiffer = seriesDates.length > 1;
+  const legends = prepared.map((series) => {
+    const dateLabel = datesDiffer && series.dates.length ? ` · ${series.dates.join(' / ')}` : '';
+    return `<button type="button" class="legend-button" data-series-toggle="${station}-${chartIndex}-${series.name}" data-series-name="${series.name}" aria-pressed="true"><i class="legend-swatch" style="--series-color:${series.color}"></i>${series.name} (${series.unit})${dateLabel}</button>`;
+  }).join('');
+  const dataDate = datesDiffer ? '' : (seriesDates[0] || String(sourceData[0]?.time || '').slice(0, 10));
   container.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-head"><div class="chart-legend">${legends}</div><time class="chart-date" datetime="${dataDate}">${dataDate || '----'}</time></div><svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${station} ${config.title}小时监测趋势图"><title>${station} ${config.title}</title><desc>实线为小时平均值，半透明阴影为正负一个标准差。</desc>${horizontalGrid}${rightAxisLabels}${timeAxis}${bands}${paths}${circles}</svg></div>`);
   const card = container.lastElementChild;
   card.querySelectorAll('.point').forEach((point) => {
