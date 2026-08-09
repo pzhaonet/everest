@@ -44,7 +44,7 @@ scheduleDailyRefresh();
 let tableOffset = 0;
 let tablePaused = false;
 function animateInstrumentTable() {
-  if (!tablePaused && !prefersReducedMotion) {
+  if (!tablePaused) {
     tableOffset += 0.22;
     const limit = Math.max(0, instrumentTrack.scrollHeight - instrumentViewport.clientHeight);
     if (tableOffset > limit + 28) tableOffset = 0;
@@ -64,7 +64,7 @@ function setupTextScroller(viewportId, trackId) {
   let paused = false;
   const animate = () => {
     const limit = Math.max(0, track.scrollHeight - viewport.clientHeight);
-    if (!paused && !prefersReducedMotion && limit > 4) {
+    if (!paused && limit > 4) {
       offset += 0.12;
       if (offset > limit + 28) offset = 0;
       track.style.transform = `translateY(${-offset}px)`;
@@ -78,18 +78,32 @@ function setupTextScroller(viewportId, trackId) {
   animate();
 }
 
-setupTextScroller('project-text-viewport', 'project-text-track');
-setupTextScroller('publication-text-viewport', 'publication-text-track');
-
 const chartConfigs = {
   everest: [
     { source: 'qxy', title: '温度与湿度', unit: '°C · %RH', axes: { left: { dynamic: true }, right: { min: 0, max: 100, ticks: [0, 25, 50, 75, 100] } }, series: [{ name: '温度', unit: '°C', key: 'temperature_mean', sdKey: 'temperature_sd', color: '#ef8b43', axis: 'left' }, { name: '湿度', unit: '%RH', key: 'humidity_mean', sdKey: 'humidity_sd', color: '#25a9d6', axis: 'right' }] },
     { source: 'qxy', title: '风速与风向', unit: 'm/s · °', axes: { left: { dynamic: true, minFloor: 0 }, right: { min: 0, max: 360, ticks: [0, 90, 180, 270, 360] } }, series: [{ name: '风速', unit: 'm/s', key: 'wind_speed_mean', sdKey: 'wind_speed_sd', color: '#7568d8', axis: 'left' }, { name: '风向', unit: '°', key: 'wind_direction_mean', color: '#d65d7b', axis: 'right' }] },
     { source: 'o3', title: 'O₃ 浓度', unit: 'ppb', axes: { left: { dynamic: true } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }] }
+    ,
+    { source: 'combined_o3_co', title: 'O₃ 与 CO', unit: 'ppb', axes: { left: { dynamic: true }, right: { dynamic: true, minFloor: 0 } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }, { name: 'CO', unit: 'ppb', key: 'CO_mean', sdKey: 'CO_sd', color: '#d8874a', axis: 'right' }] },
+    { source: 'ftir', title: 'CO₂ 与 CH₄', unit: 'ppm · ppb', axes: { left: { dynamic: true }, right: { dynamic: true, minFloor: 0 } }, series: [{ name: 'CO₂', unit: 'ppm', key: 'CO2_mean', sdKey: 'CO2_sd', color: '#b46bd6', axis: 'left' }, { name: 'CH₄', unit: 'ppb', key: 'CH4_mean', sdKey: 'CH4_sd', color: '#e3b341', axis: 'right' }] }
   ]
 };
 
-let hourlyData = { o3: [], qxy: [] };
+chartConfigs.everest = chartConfigs.everest.filter((config) => config.source !== 'o3');
+chartConfigs.everest.push(
+  { source: 'combined_o3_co', title: 'O₃ 与 CO', unit: 'ppb', axes: { left: { dynamic: true }, right: { dynamic: true, minFloor: 0 } }, series: [{ name: 'O₃', unit: 'ppb', key: 'O3_mean', sdKey: 'O3_sd', color: '#37b981', axis: 'left' }, { name: 'CO', unit: 'ppb', key: 'CO_mean', sdKey: 'CO_sd', color: '#d8874a', axis: 'right' }] },
+  { source: 'ftir', title: 'CO₂ 与 CH₄', unit: 'ppm · ppb', axes: { left: { dynamic: true }, right: { dynamic: true, minFloor: 0 } }, series: [{ name: 'CO₂', unit: 'ppm', key: 'CO2_mean', sdKey: 'CO2_sd', color: '#b46bd6', axis: 'left' }, { name: 'CH₄', unit: 'ppb', key: 'CH4_mean', sdKey: 'CH4_sd', color: '#e3b341', axis: 'right' }] }
+);
+
+chartConfigs.everest = chartConfigs.everest.slice(0, 4);
+chartConfigs.everest.filter((config) => ['combined_o3_co', 'ftir'].includes(config.source)).forEach((config) => {
+  if (config.axes.right) delete config.axes.right.minFloor;
+  config.series.forEach((series) => {
+    if (series.name === 'CO') series.color = '#f05d5e';
+    if (series.name === 'CH₄') series.color = '#00a6a6';
+  });
+});
+let hourlyData = { o3: [], qxy: [], ftir: [], combined_o3_co: [] };
 const chartTooltip = document.createElement('div');
 chartTooltip.className = 'chart-tooltip';
 chartTooltip.setAttribute('role', 'status');
@@ -218,6 +232,11 @@ function renderContent(content) {
       .join('');
     publicationTrack.innerHTML = publications;
   }
+
+  window.requestAnimationFrame(() => {
+    setupTextScroller('project-text-viewport', 'project-text-track');
+    setupTextScroller('publication-text-viewport', 'publication-text-track');
+  });
 }
 
 async function loadHourlyData() {
@@ -227,11 +246,14 @@ async function loadHourlyData() {
     if (!response.ok) throw new Error(`${fileName} 加载失败：${response.status}`);
     return parseCsv(await response.text());
   };
-  const [o3, qxy] = await Promise.all([
+  const [o3, qxy, ftir] = await Promise.all([
     loadFile('hourly_O3.csv'),
-    loadFile('hourly_qxy.csv')
+    loadFile('hourly_qxy.csv'),
+    loadFile('hourly_ftir.csv')
   ]);
-  return { o3, qxy };
+  const ftirByTime = new Map(ftir.map((row) => [row.time, row]));
+  const combined_o3_co = o3.map((row) => ({ ...row, ...(ftirByTime.get(row.time) || {}) }));
+  return { o3, qxy, ftir, combined_o3_co };
 }
 
 function formatValue(value) {

@@ -109,10 +109,11 @@ h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line
 .scroll-line::after { content: ''; position: absolute; right: 0; top: -2px; width: 5px; height: 5px; border-right: 1px solid var(--gold); border-top: 1px solid var(--gold); transform: rotate(45deg); }
 .intro-copy { max-width: 720px; margin-bottom: 8px; color: var(--copy); font-size: 12px; line-height: 1.55; }
 .intro-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: auto; }
-.intro-metrics div { display: flex; min-height: 50px; flex-direction: column; justify-content: center; padding: 7px 9px; border-left: 2px solid var(--gold); background: rgba(239,185,74,.06); }
+.intro-metrics div { display: flex; min-height: 0; flex-direction: row; align-items: center; justify-content: center; gap: 6px; padding: 1px 9px; border-left: 2px solid var(--gold); background: rgba(239,185,74,.06); }
 .intro-metrics strong { display: block; color: var(--gold-soft); font: 500 19px/1 'DM Mono', monospace; }
 .intro-metrics strong span { font-size: 12px; }
 .intro-metrics span { color: var(--muted); font-size: 11px; }
+.intro-metrics div > span { white-space: nowrap; }
 
 .table-responsive { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; color: var(--table-text); font-size: 10px; text-align: left; }
@@ -250,7 +251,7 @@ h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line
   .section-heading { margin-bottom: 5px; }
   .section-heading h2, .data-toolbar h2 { font-size: 15px; }
   .intro-copy { display: -webkit-box; margin-bottom: 6px; overflow: hidden; font-size: 11px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  .intro-metrics div { min-height: 43px; padding: 5px 7px; }
+  .intro-metrics div { min-height: 0; padding: 1px 7px; }
   .intro-metrics strong { font-size: 16px; }
   .data-table th, .data-table td { padding: 4px 5px; font-size: 10px; }
   .chart-svg { height: auto; flex: 1 1 76px; }
@@ -286,6 +287,9 @@ h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line
   .photo-grid { grid-template-columns: repeat(3, 1fr); }
   .footer-bar { flex-direction: column; }
 }
+
+/* 简介文字需要完整显示；小屏幕上由页面自然增高承载全文。 */
+.intro-copy { display: block; overflow: visible; -webkit-line-clamp: unset; }
 @media (max-width: 430px) {
   .logo-group { gap: 6px; }
   .logo-image { width: 32px; height: 34px; }
