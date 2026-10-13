@@ -1,4 +1,30 @@
 const themeToggle = document.querySelector('#theme-toggle');
+const languageToggle = document.querySelector('#language-toggle');
+const savedLanguage = window.localStorage.getItem('station-language');
+let currentLanguage = savedLanguage === 'en' ? 'en' : 'zh';
+let pageContent = null;
+const translations = {
+  siteTitle: ['西藏大学高原生态环境与健康院士专家工作站', 'Academician Workstation for Plateau Ecology, Environment & Health'],
+  introTitle: ['院士工作站简介', 'Overview'], stationsTitle: ['观测站', 'Observatories'],
+  instrumentsTitle: ['仪器', 'Instruments'], photosTitle: ['科考影像', 'Fieldwork Images'],
+  projectsTitle: ['科研项目', 'Research Projects'], publicationsTitle: ['近期论文', 'Recent Publications'],
+  latestDataTitle: ['站点最新数据', 'Latest Data'], everestStation: ['珠峰站', 'Qomolangma Station'],
+  camera1: ['摄像机一', 'Camera 1'], camera2: ['摄像机二', 'Camera 2']
+};
+const chartTitleTranslations = { '温度与湿度': 'Temperature & Humidity', '风速与风向': 'Wind Speed & Direction', 'O₃ 浓度': 'O₃ Concentration', 'O₃ 与 CO': 'O₃ & CO', 'CO₂ 与 CH₄': 'CO₂ & CH₄' };
+const metricLabelTranslations = { '协同观测站': 'Collaborative Observation Stations', '连续监测': 'Continuous Monitoring', '核心仪器': 'Core Instruments' };
+const seriesNameTranslations = { '温度': 'Temperature', '湿度': 'Humidity', '风速': 'Wind Speed', '风向': 'Wind Direction', 'O₃': 'O₃', 'CO': 'CO', 'CO₂': 'CO₂', 'CH₄': 'CH₄' };
+function applyLanguage(language) {
+  currentLanguage = language === 'en' ? 'en' : 'zh';
+  document.documentElement.lang = currentLanguage === 'en' ? 'en' : 'zh-CN';
+  document.title = currentLanguage === 'en' ? 'Plateau Ecology, Environment & Health · Observation Station' : '高原生态环境与健康 · 观测站可视化';
+  document.querySelectorAll('[data-i18n]').forEach((element) => { const values = translations[element.dataset.i18n]; if (values) element.textContent = values[currentLanguage === 'en' ? 1 : 0]; });
+  if (languageToggle) { languageToggle.textContent = currentLanguage === 'en' ? '中' : 'EN'; languageToggle.setAttribute('aria-pressed', String(currentLanguage === 'en')); languageToggle.setAttribute('aria-label', currentLanguage === 'en' ? 'Switch to Chinese interface' : '切换到英文界面'); }
+  window.localStorage.setItem('station-language', currentLanguage);
+  if (pageContent) renderContent(pageContent);
+  if (typeof renderAllCharts === 'function' && hourlyData.o3.length) renderAllCharts();
+}
+if (languageToggle) languageToggle.addEventListener('click', () => applyLanguage(currentLanguage === 'en' ? 'zh' : 'en'));
 const themeMeta = document.querySelector('meta[name="theme-color"]');
 const savedTheme = window.localStorage.getItem('station-theme');
 
@@ -164,8 +190,9 @@ async function fetchContentFile(fileName, type = 'text') {
 }
 
 async function loadContent() {
-  const [intro, metrics, stations, instruments, projects, publications, photos] = await Promise.all([
+  const [intro, introEn, metrics, stations, instruments, projects, publications, photos] = await Promise.all([
     fetchContentFile('intro.txt'),
+    fetchContentFile('intro_en.txt'),
     fetchContentFile('intro_metrics.csv').then(parseCsv),
     fetchContentFile('stations.csv').then(parseCsv),
     fetchContentFile('instruments.csv').then(parseCsv),
@@ -173,7 +200,7 @@ async function loadContent() {
     fetchContentFile('publications.csv').then(parseCsv),
     fetchContentFile('photos.json', 'json')
   ]);
-  return { intro: intro.trim(), metrics, stations, instruments, projects, publications, photos };
+  return { intro: intro.trim(), introEn: introEn.trim(), metrics, stations, instruments, projects, publications, photos };
 }
 
 function renderTableHead(elementId, labels) {
@@ -202,21 +229,21 @@ function formatPublicationReference(publication) {
 
 function renderContent(content) {
   const introCopy = document.querySelector('#intro-copy');
-  if (introCopy) introCopy.textContent = content.intro;
+  if (introCopy) introCopy.textContent = currentLanguage === 'en' ? content.introEn : content.intro;
 
   const metrics = document.querySelector('#intro-metrics');
   if (metrics) {
-    metrics.innerHTML = content.metrics.map((metric) => `<div><strong>${escapeHtml(metric.value)}${metric.suffix ? `<span>${escapeHtml(metric.suffix)}</span>` : ''}</strong><span>${escapeHtml(metric.label)}</span></div>`).join('');
+    metrics.innerHTML = content.metrics.map((metric) => { const label = currentLanguage === 'en' ? (metricLabelTranslations[metric.label] || metric.label) : metric.label; return `<div><strong>${escapeHtml(metric.value)}${metric.suffix ? `<span>${escapeHtml(metric.suffix)}</span>` : ''}</strong><span>${escapeHtml(label)}</span></div>`; }).join('');
   }
 
-  renderTableHead('station-head', ['中文全称', '中文简称', '英文全称']);
+  renderTableHead('station-head', currentLanguage === 'en' ? ['Chinese Name', 'Abbr.', 'English Name'] : ['中文名', '简称', '英文全称']);
   renderTableRows('station-track', content.stations, ['name', 'short_name', 'english_name']);
-  renderTableHead('instrument-head', ['仪器名称', '型号', '所属站点', '监测要素']);
+  renderTableHead('instrument-head', currentLanguage === 'en' ? ['Instrument', 'Model', 'Station', 'Variables'] : ['仪器名称', '型号', '所属站点', '监测要素']);
   renderTableRows('instrument-track', content.instruments, ['name', 'model', 'station', 'elements']);
 
   const photoGrid = document.querySelector('#photo-grid');
   if (photoGrid) {
-    photoGrid.innerHTML = content.photos.map((photo) => `<figure class="field-photo"><img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt || photo.title)}" /><figcaption>${escapeHtml(photo.title)}</figcaption></figure>`).join('');
+    photoGrid.innerHTML = content.photos.map((photo) => { const title = currentLanguage === 'en' ? (photo.title_en || photo.title) : photo.title; return `<figure class="field-photo"><img src="${escapeHtml(photo.src)}" alt="${escapeHtml(title)}" /><figcaption>${escapeHtml(title)}</figcaption></figure>`; }).join('');
   }
 
   const projectTrack = document.querySelector('#project-text-track');
@@ -364,10 +391,10 @@ function renderChart(container, config, station, chartIndex) {
       const tickY = axisY + (isMajor ? 4 : 2);
       const majorGrid = isMajor ? `<line class="grid-line major-x-grid" x1="${x(index)}" y1="${plot.top}" x2="${x(index)}" y2="${axisY}"></line>` : '';
       const tick = `<line class="axis-tick axis-tick--${isMajor ? 'major' : 'minor'}" x1="${x(index)}" y1="${axisY}" x2="${x(index)}" y2="${tickY}"></line>`;
-      const tickLabel = isMajor ? `<text class="axis-label axis-label--x" x="${x(index)}" y="${height - 4}" text-anchor="middle">${label} 时</text>` : '';
+      const tickLabel = isMajor ? `<text class="axis-label axis-label--x" x="${x(index)}" y="${height - 4}" text-anchor="middle">${label}</text>` : '';
       return `${majorGrid}${tick}${tickLabel}`;
     }
-    return `<text class="axis-label axis-label--x" x="${x(index)}" y="${height - 4}" text-anchor="middle">${label} 时</text>`;
+    return `<text class="axis-label axis-label--x" x="${x(index)}" y="${height - 4}" text-anchor="middle">${label}</text>`;
   }).join('');
   const bands = prepared.map((series) => {
     if (!series.sdKey) return '';
@@ -393,17 +420,15 @@ function renderChart(container, config, station, chartIndex) {
   }).join('')).join('');
   const seriesDates = [...new Set(prepared.flatMap((series) => series.dates))];
   const datesDiffer = seriesDates.length > 1;
-  const legends = prepared.map((series) => {
-    const dateLabel = datesDiffer && series.dates.length ? ` · ${series.dates.join(' / ')}` : '';
-    return `<button type="button" class="legend-button" data-series-toggle="${station}-${chartIndex}-${series.name}" data-series-name="${series.name}" aria-pressed="true"><i class="legend-swatch" style="--series-color:${series.color}"></i>${series.name} (${series.unit})${dateLabel}</button>`;
-  }).join('');
+  const chartTitle = currentLanguage === 'en' ? (chartTitleTranslations[config.title] || config.title) : config.title;
+    const legends = prepared.map((series) => { const dateLabel = datesDiffer && series.dates.length ? ` · ${series.dates.join(' / ')}` : ''; const seriesLabel = currentLanguage === 'en' ? (seriesNameTranslations[series.name] || series.name) : series.name; return `<button type="button" class="legend-button" data-series-toggle="${station}-${chartIndex}-${series.name}" data-series-name="${series.name}" aria-pressed="true"><i class="legend-swatch" style="--series-color:${series.color}"></i>${seriesLabel} (${series.unit})${dateLabel}</button>`; }).join('');
   const dataDate = datesDiffer ? '' : (seriesDates[0] || String(sourceData[0]?.time || '').slice(0, 10));
-  container.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-head"><div class="chart-legend">${legends}</div><time class="chart-date" datetime="${dataDate}">${dataDate || '----'}</time></div><svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${station} ${config.title}小时监测趋势图"><title>${station} ${config.title}</title><desc>实线为小时平均值，半透明阴影为正负一个标准差。</desc>${horizontalGrid}${rightAxisLabels}${timeAxis}${bands}${paths}${circles}</svg></div>`);
+  container.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-head"><div class="chart-legend">${legends}</div><time class="chart-date" datetime="${dataDate}">${dataDate || '----'}</time></div><svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${station} ${chartTitle}小时监测趋势图"><title>${station} ${chartTitle}</title><desc>实线为小时平均值，半透明阴影为正负一个标准差。</desc>${horizontalGrid}${rightAxisLabels}${timeAxis}${bands}${paths}${circles}</svg></div>`);
   const card = container.lastElementChild;
   card.querySelectorAll('.point').forEach((point) => {
     const showTooltip = () => {
       const uncertainty = point.dataset.sd ? ` ± ${point.dataset.sd}` : '';
-      chartTooltip.innerHTML = `<strong>${config.title} · ${point.dataset.label} 时</strong><span>${point.dataset.series} ${point.dataset.value}${uncertainty} ${point.dataset.unit}</span>`;
+      chartTooltip.innerHTML = `<strong>${chartTitle} · ${point.dataset.label} 时</strong><span>${point.dataset.series} ${point.dataset.value}${uncertainty} ${point.dataset.unit}</span>`;
       chartTooltip.style.display = 'block';
       const box = point.getBoundingClientRect();
       const left = Math.min(window.innerWidth - 140, Math.max(8, box.left + box.width / 2 - 60));
@@ -456,7 +481,8 @@ async function initializeCharts() {
 
 async function initializeContent() {
   try {
-    renderContent(await loadContent());
+    pageContent = await loadContent();
+    renderContent(pageContent);
   } catch (error) {
     console.error(error);
   }
@@ -464,3 +490,4 @@ async function initializeContent() {
 
 initializeContent();
 initializeCharts();
+applyLanguage(currentLanguage);

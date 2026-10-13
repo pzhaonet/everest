@@ -15,6 +15,7 @@
           <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
           <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.3A8.5 8.5 0 0 1 8.7 3.6 8.5 8.5 0 1 0 20.4 15.3Z"></path></svg>
         </button>
+        <button type="button" class="language-toggle" id="language-toggle" aria-label="切换到英文界面" aria-pressed="false">EN</button>
         <div class="logo-group logo-group--left" aria-label="左侧合作单位">
           <img class="logo-image" src="logo/image3.png" alt="西藏高原科学研究标识" />
           <img class="logo-image" src="logo/image7.png" alt="云南大学标识" />
@@ -23,7 +24,7 @@
         </div>
 
         <div class="title-block">
-          <h1>西藏大学高原生态环境与健康院士专家工作站</h1>
+          <h1 data-i18n="siteTitle">西藏大学高原生态环境与健康院士专家工作站</h1>
           <time id="live-clock" class="live-clock" datetime="">0000-00-00 00:00:00</time>
         </div>
 
@@ -40,7 +41,7 @@
           <article class="panel intro-panel">
             <div class="section-heading">
               <div>
-                <h2>院士工作站简介</h2>
+                <h2 data-i18n="introTitle">院士工作站简介</h2>
               </div>
             </div>
             <p class="intro-copy" id="intro-copy"></p>
@@ -50,7 +51,7 @@
           <article class="panel overview-panel">
             <div class="section-heading section-heading--compact">
               <div>
-                <h2>观测站</h2>
+                <h2 data-i18n="stationsTitle">观测站</h2>
               </div>
             </div>
             <div class="table-responsive">
@@ -64,7 +65,7 @@
           <article class="panel instruments-panel">
             <div class="section-heading section-heading--compact">
               <div>
-                <h2>仪器</h2>
+                <h2 data-i18n="instrumentsTitle">仪器</h2>
               </div>
             </div>
             <div class="instrument-viewport" id="instrument-viewport" aria-label="自动滚动的仪器总体情况表">
@@ -78,7 +79,7 @@
           <article class="panel gallery-panel">
             <div class="section-heading section-heading--compact">
               <div>
-                <h2>科考影像</h2>
+                <h2 data-i18n="photosTitle">科考影像</h2>
               </div>
             </div>
             <div class="photo-grid" id="photo-grid" aria-label="科研活动影像示意"></div>
@@ -87,7 +88,7 @@
           <article class="panel projects-panel">
             <div class="section-heading section-heading--compact">
               <div>
-                <h2>科研项目</h2>
+                <h2 data-i18n="projectsTitle">科研项目</h2>
               </div>
             </div>
             <div class="project-text-viewport" id="project-text-viewport" tabindex="0" aria-label="自动滚动的科研项目">
@@ -98,7 +99,7 @@
           <article class="panel projects-panel publications-panel">
             <div class="section-heading section-heading--compact">
               <div>
-                <h2>近期论文</h2>
+                <h2 data-i18n="publicationsTitle">近期论文</h2>
               </div>
             </div>
             <div class="publication-text-viewport" id="publication-text-viewport" tabindex="0" aria-label="自动滚动的近期论文">
@@ -109,17 +110,17 @@
 
         <section class="right-column" aria-label="观测站实时数据">
           <div class="data-toolbar">
-            <div><h2>站点最新数据</h2></div>
+            <div><h2 data-i18n="latestDataTitle">站点最新数据</h2></div>
           </div>
 
           <article class="station-panel station-panel--everest" id="everest-panel">
             <div class="station-heading">
-              <div><h3>珠峰站</h3></div>
+              <div><h3 data-i18n="everestStation">珠峰站</h3></div>
             </div>
             <div class="station-content">
               <div class="chart-grid" data-station="everest">
-                <figure class="camera-card"><img src="camera/1.webp" alt="摄像机一实时画面" /><figcaption class="chart-title">摄像机一</figcaption></figure>
-                <figure class="camera-card"><img src="camera/2.webp" alt="摄像机二实时画面" /><figcaption class="chart-title">摄像机二</figcaption></figure>
+                <figure class="camera-card"><img src="camera/1.webp" alt="摄像机一实时画面" /><figcaption class="chart-title" data-i18n="camera1">摄像机一</figcaption></figure>
+                <figure class="camera-card"><img src="camera/2.webp" alt="摄像机二实时画面" /><figcaption class="chart-title" data-i18n="camera2">摄像机二</figcaption></figure>
               </div>
             </div>
           </article>
