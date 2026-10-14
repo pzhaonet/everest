@@ -4,7 +4,7 @@ const savedLanguage = window.localStorage.getItem('station-language');
 let currentLanguage = savedLanguage === 'en' ? 'en' : 'zh';
 let pageContent = null;
 const translations = {
-  siteTitle: ['西藏大学高原生态环境与健康院士专家工作站', 'Academician Workstation for Plateau Ecology, Environment & Health'],
+  siteTitle: ['西藏大学高原生态环境与健康院士专家工作站', 'Xizang Univ. Workstation for Acadamician and Scientist of AEEEH'],
   introTitle: ['院士工作站简介', 'Overview'], stationsTitle: ['观测站', 'Observatories'],
   instrumentsTitle: ['仪器', 'Instruments'], photosTitle: ['科考影像', 'Fieldwork Images'],
   projectsTitle: ['科研项目', 'Research Projects'], publicationsTitle: ['近期论文', 'Recent Publications'],

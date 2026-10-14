@@ -92,7 +92,7 @@ body[data-theme="light"] .theme-icon--moon { display: none; }
 .publication-label { margin: 0 0 6px; color: var(--gold); font: 500 10px/1.1 'DM Mono', monospace; letter-spacing: .12em; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 8px; color: #142b31; font-size: clamp(18px, 2vw, 29px); line-height: 1.2; letter-spacing: .03em; }
-html[lang="en"] h1 { white-space: nowrap; font-size: clamp(18px, 1.15vw, 29px); letter-spacing: 0; }
+html[lang="en"] h1 { white-space: nowrap; font-size: clamp(18px, 1.6vw, 29px); letter-spacing: 0; }
 html[lang="zh-CN"] h1 { white-space: nowrap; }
 .live-clock { display: block; width: 100%; text-align: center; color: #29454b; font: 500 clamp(15px, 1.5vw, 21px) 'DM Mono', monospace; letter-spacing: -.04em; }
 
